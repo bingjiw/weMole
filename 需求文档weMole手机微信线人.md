@@ -87,6 +87,66 @@ FTP_root
 　　　　　...
 ```
 
+
+
+## Dir-ItchatMsg - FTP上传文件夹内的文件命名规则
+
+![ItchatMsg-FileList](/Users/bingji/BJ-play-AI/weMole/ItchatMsg-FileList.png)
+
+如上图，新上传的文件命名：{消息创建的时间unix_timestamp} _ {消息类型} _ {去除了非法字符的微信消息的前75个字}.{strSingleOrGroup}.Writing  
+上传完成后，把文件后缀 重命名为 .json  。 
+
+上传的文件被服务器端App处理后，会把文件重命名：在开头加上  Done_  表示此文件已经被服务器处理过了。
+
+因微信消息具有先后关系，所以处理时服务器会按文件名排序（即按 {消息创建的时间unix_timestamp} 排序）从小到大依次处理。
+
+下方是python的文件命名代码，供参考。
+
+```
+    # 把可序列化的 itchat_msg 存到文件中
+    strCreateTime = str(itchat_msg['CreateTime'])
+    strSingleOrGroup = "Group" if is_group else "Single"
+
+    #用内容作文件名的一部分，更方便查找
+    part_of_filename = itchat_msg['Type'] + '_' + itchat_msg['Content']   #itchat_msg['User']['NickName'] + '_' + 
+    sanitized_part_of_filename = re.sub(r'[^a-zA-Z0-9_\u4e00-\u9fa5]', '_', part_of_filename)  # 保留中文字符
+    sanitized_part_of_filename = re.sub(r'_{2,}', '_', sanitized_part_of_filename)  # 将连续多个"____"替换为一个"_"
+    #File name too long: 'Dir-ItchatMsg/1728316034_Text_密宗的传承始祖是谁_密宗的起源是佛教史上的难题之一_很多的研究往往以东密的说法加以考察_而藏传佛教关于密宗的起源的解说则是迥然不同_藏传佛教认为密宗是出于佛之.Group.json'
+    sanitized_part_of_filename = sanitized_part_of_filename[:75]  # 截取前75个字符 ,一个中文占三个UTF-8字节, Linux文件名最长255, 所以计算结果是 减去头尾的英文字符 剩下只能放75个中文字符 
+
+    # 先写入 ".Writing" 结尾的文件，以防止写入没完全完成时，那边又同时在读出它，而导致读出错乱
+    aFilePathWithoutExt = f"Dir-ItchatMsg/{strCreateTime}_{sanitized_part_of_filename}.{strSingleOrGroup}"
+    with open(f"{aFilePathWithoutExt}.Writing", "w", encoding="utf-8") as f:
+        json.dump(serializable_msg, f, ensure_ascii=False)
+    # 再改名【改名是原子操作】
+    os.rename(f"{aFilePathWithoutExt}.Writing", f"{aFilePathWithoutExt}.json")
+```
+
+
+
+## Dir-SendingOut - FTP下载文件夹内的文件命名规则
+
+![SendingOut-FileList](/Users/bingji/BJ-play-AI/weMole/SendingOut-FileList.png)
+
+如上图，文件名为：{current_hour}点{count_of_msg_in_this_hour:04d}-{strReceiverID}.txt    
+
+把要发送的微信消息内容 写入到 文件 Dir-SendingOut/08点0004-@@838293983893939298472919.txt 中   
+文件名 是 当前时间几点+此小时中的第几条消息+要发送的目标微信ID 的 字符串
+文件内容 是 要发送的微信消息内容。
+
+要发送的目标微信ID（即消息的目标接收者ID）从文件名的 - 后部分取得，Python参考代码如下：
+
+```
+        # 从文件名 Dir-SendingOut/08点0004-@@838293983893939298472919.txt 中 取出 receiverID
+        receiverID = file_name.split("-")[1].split(".txt")[0]
+```
+
+发微信时，同样按文件名排序，从小到到 依次发出。
+如微信发出消息成功，则删除此文件。
+如失败，等待3秒后再试一次（也许网络连接恢复），若再失败，则删除此文件，写入出错日志并提醒管理员。
+
+
+
 ## （手机端与服务器，通过FTP）读写文件时的要求
 
 为避免FTP写文件时，文件写了一半，被服务器或手机端读取（对方看到文件，但不知文件才写了一半）到不完整的文件。即读写同时发生时的冲突的问题。
