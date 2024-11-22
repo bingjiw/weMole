@@ -91,7 +91,7 @@ FTP_root
 
 ## Dir-ItchatMsg - FTP上传文件夹内的文件命名规则
 
-![ItchatMsg-FileList](/Users/bingji/BJ-play-AI/weMole/ItchatMsg-FileList.png)
+![ItchatMsg-FileList](https://github.com/bingjiw/weMole/blob/main/ItchatMsg-FileList.png?raw=true)
 
 如上图，新上传的文件命名：{消息创建的时间unix_timestamp} _ {消息类型} _ {去除了非法字符的微信消息的前75个字}.{strSingleOrGroup}.Writing  
 上传完成后，把文件后缀 重命名为 .json  。 
@@ -126,7 +126,7 @@ FTP_root
 
 ## Dir-SendingOut - FTP下载文件夹内的文件命名规则
 
-![SendingOut-FileList](/Users/bingji/BJ-play-AI/weMole/SendingOut-FileList.png)
+![SendingOut-FileList](https://github.com/bingjiw/weMole/blob/main/SendingOut-FileList.png?raw=true)
 
 如上图，文件名为：{current_hour}点{count_of_msg_in_this_hour:04d}-{strReceiverID}.txt    
 
