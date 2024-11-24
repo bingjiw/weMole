@@ -1,6 +1,8 @@
 # weMole 手机微信线人
 用Android无障碍或Xposed技术来收发手机微信消息
-（预算1w-2w人民币），发布人微信 bingjiw
+发布人微信 bingjiw
+
+
 
 ## 总体要求
 
@@ -10,6 +12,8 @@
 
 需能每天24小时永久运行，不掉线。
 
+
+
 ## 长期运行免封号
 
 但必须做到不被微信探查到，以免微信封号。需实现可靠的免探查免封号技术。
@@ -17,9 +21,13 @@
 
 ***首先保证运行此软件不会导致微信被封号，如在试运行的3个月中发生封号，则需改进，改进后，要重新再试运行3个月。***
 
+
+
 ## 对硬件与操作系统及微信版本的要求：
 
-(根据开发者所用技术，补充在此)
+(根据开发者所用技术，详见开发合同)
+
+
 
 ## 启动与暂停
 
@@ -28,6 +36,8 @@
 当检查到有人操作时，则暂停获取消息与收发消息。
 
 暂停、自动收发时 有不同的 图标显示在手机屏幕上。
+
+
 
 ## 消息获取、暂存、发出
 
@@ -41,13 +51,7 @@ FTP成功发送出之后，会移到 History.Old 文件夹中。History.Old 文�
 
 当因网络等原因，无法向FTP服务器传送与接收时，显示警告的图标在屏幕上。但仍继续自动接收新的消息 存于手机存储空间中。
 
-## 获取微信消息的发送者ID、接收者ID（所在的群ID）
-
-比如我手机微信中有两个微信群都叫做“我的一家”。我要回复给其中一个群，如何区分不同的群呢？
-
-那如何区分不同的微信用户呢？假设两个用户都叫小张，他们的id不一样，如何区分？如果我要回复答案给小张的话，应该回复给哪一个小张呢？
-
-用“无障碍技术”或“Xposed技术”能否取到微信中对方的wechat id呢？还是wxid?
+## 
 
 ## 基本逻辑
 
@@ -155,6 +159,8 @@ FTP_root
 
 读文件时，不要读带有 .writing 后缀名的。
 
+
+
 ## 手机端从FTP上传下载文件，分别分以下几步走：
 
 接收消息：
@@ -166,6 +172,121 @@ FTP服务器下载  -->  手机存储记忆体  -->  微信发出消息
 FTP上下传 与 无障碍  分别用不同的线程或进程，互相不阻塞对方的运行。
 
 
+
+## 从微信获取的每一第消息需要获取并写到消息文本文件的字段（属性）
+
+### "Type": 消息类型，取值如下：
+
+> ​    ACCEPT_FRIEND  # 同意好友请求
+>
+> ​    JOIN_GROUP   # 加入群聊
+>
+> ​    PATPAT  # 拍了拍
+>
+> ​    EXIT_GROUP  #退群
+>
+> ​    REVOKE_MSG  # 撤回消息  
+>
+> ​    UNKNOWN  # 未知消息 
+>
+> ​    RED_PACKET  # 红包   
+
+> ​    TEXT       = 'Text'
+>
+> ​    MAP        = 'Map'
+>
+> ​    CARD       = 'Card'
+>
+> ​    NOTE       = 'Note'
+>
+> ​    SHARING    = 'Sharing'   分享，如公众号分享、视频号分享 等
+>
+> ​    PICTURE    = 'Picture'
+>
+> ​    RECORDING  = VOICE = 'Recording'    微信语音（本项目因获取不到语音文件，暂不用）
+>
+> ​    VOICE_TO_TEXT_TRANSCRIPT = 'Voice-to-text_transcript'    利用微信自带的功能把语音转成的文本
+>
+> ​    ATTACHMENT = 'Attachment'     文件（用户发的各种文件）
+>
+> ​    VIDEO      = 'Video'
+>
+> ​    FRIENDS    = 'Friends'
+>
+> ​    SYSTEM     = 'System'   其他微信系统消息
+>
+> 如有遗漏，开发时再补充
+
+### "COUNTY_HEAD_USER_ID_from_weMole": 当前的微信帐号主人（本人）的微信号（海外版微信是WeChatID）
+
+> 本项目中 把微信主人 称为 COUNTY_HEAD，意为县官
+>
+> 取值如 bingjiw ，即为汪先生的微信号
+
+### "COUNTY_HEAD_NICKNAME_from_weMole": 当前的微信帐号主人（本人）的昵称
+
+> 取值如："汪先生😀😀😀"
+
+### 'RoomName': 房间名（即聊天室的名称）
+
+> 如群聊，即为群名
+>
+> 如单聊，取值如：〔汪先生😀😀😀〕与〔Allen💪-微信号〕 
+> COUNTY_HEAD_NICKNAME 放在左侧括号内，对方昵称与微信号放在右侧括号内
+
+### 'GroupName': 群名。  如非群，则为''
+
+### 'SpeakerNickName': 说话人的昵称，即发出本消息的人的昵称
+
+### 'SpeakerID': 说话人的ID，即发出本消息的人的微信号或WeChatID
+
+> 注意微信群中可能会有微信海外版的WeChat用户，它们是WeChatID
+
+### 'IsGroupChat': 是否是群聊
+
+### 'IsSingleChat': 是否是单聊
+
+### 'ReceiverID_WhenReply':  AI回复消息时，要回复给谁
+
+> 单聊回复对方
+>
+> 群聊回复到群里
+
+### 'CreateTimeStamp': 消息创建的时间，UNIX-TimeStamp
+
+### 'RoomID': 房间ID
+
+> 群聊时 即为群ID
+> 单聊时 即为对方的微信号
+
+### 'GroupID': 群聊的群ID
+
+### 'Being_at_Me_in_Group': 本消息是群消息，且本消息中县官被@了
+
+### 'To_User_Nickname': 本消息是发给谁的
+
+### 'ThisMsg_is_SentByMyself': 本消息是县官发的吗？
+
+> 县官发出的消息分为2种：
+> 1.AI经weMole自动发出的，此类消息无需获取，所以无需赋值。
+> 2.县官人为手工（在手机或同步的电脑或IPAD上）发出的，此类需要获取并置本属性为TRUE。
+
+### 'TextHasReference': 本消息有没有引用以前的某消息
+
+### 'content': 消息的具体内容
+
+> 文本、语音，则为对应文字
+>
+> 如是文件、图片、视频等，则为对应的文件名，如：tmp/8383892848402.jpg
+>
+> 如是公众号分享，则为公众号的所有文字内容
+
+### 'Has_AtSomeone_in_Msg': 本消息中有没有@别人
+
+> 可以是@任何人
+
+
+
 ## 代码要求、每天提交代码
 
 
@@ -175,42 +296,9 @@ FTP上下传 与 无障碍  分别用不同的线程或进程，互相不阻塞�
 
 
 
-## 用户文档
+## App使用手册（文档）
 
 需详细指导一个新人从一台新买的手机，一步步，如何安装设置到正常工作为止。
 
 ------
-
-
-
-### Android无障碍技术实现，技术参考
-
-
-
-
-
-------
-
-
-
-### 安卓上Xposed技术实现的大概思路、技术参考：
-
-  安卓上实现：采用LSPosed获取与操控微信App。 
-
-可参考以下项目的实现方法：
-
-https://github.com/ziyunzhifeng/WeChatGPT
-本项目是一个Xposed模块，实现一个微信聊天里能够引用大模型进行聊天消息的自动回复，实现一个工作助手，智能客服相关功能。
-这个工程不能独立运行，需要依赖具有Java Hook 核心的框架支持。
-
-https://www.ghxi.com/exp.html
-
-https://blog.csdn.net/feibabeibei_beibei/article/details/89605877
-
-更多技术参考：
-https://juejin.cn/post/7280435879548911675
-https://iiong.com/getting-started-with-android-xposed-modules/
-https://blog.csdn.net/m0_68075044/article/details/130163627
-https://lbqaq.top/p/init-xposed/
-https://blog.ketal.icu/cn/Xposed%E6%A8%A1%E5%9D%97%E5%BC%80%E5%8F%91%E5%85%A5%E9%97%A8%E4%BF%9D%E5%A7%86%E7%BA%A7%E6%95%99%E7%A8%8B/
 
